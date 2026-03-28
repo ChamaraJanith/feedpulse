@@ -6,6 +6,7 @@ import { connectDB } from './config/db';
 
 //add internal imports
 import feedbackRoutes from './routes/feedback.routes';
+import authRoutes from './routes/auth.routes';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/auth', authRoutes);
 
 // Middleware
 app.use(helmet());

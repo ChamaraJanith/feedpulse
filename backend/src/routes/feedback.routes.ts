@@ -7,6 +7,9 @@ import {
   deleteFeedback,
 } from '../controllers/feedback.controller';
 
+//import middleware
+import { protect } from '../middleware/auth.middleware';
+
 const router = Router();
 
 // Public routes - anyone can access

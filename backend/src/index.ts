@@ -4,10 +4,19 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 
+//add internal imports
+import feedbackRoutes from './routes/feedback.routes';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+app.use('/api/feedback', feedbackRoutes);
 
 // Middleware
 app.use(helmet());

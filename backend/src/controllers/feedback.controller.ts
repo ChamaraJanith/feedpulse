@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import Feedback from '../models/feedback.model';
 
+//Gemini analysis
+import { analyzeFeedback } from '../services/gemini.service';
+
 // POST /api/feedback
 export const createFeedback = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -13,6 +16,19 @@ export const createFeedback = async (req: Request, res: Response): Promise<void>
       submitterName,
       submitterEmail,
     });
+
+        // Gemini AI analysis
+    const aiAnalysis = await analyzeFeedback(feedback.title, feedback.description);
+
+    if (aiAnalysis) {
+      feedback.aiCategory = aiAnalysis.category;
+      feedback.aiSentiment = aiAnalysis.sentiment;
+      feedback.aiPriority = aiAnalysis.priorityScore;
+      feedback.aiSummary = aiAnalysis.summary;
+      feedback.aiTags = aiAnalysis.tags;
+      feedback.aiProcessed = true;
+      await feedback.save();
+    }
 
     res.status(201).json({
       success: true,

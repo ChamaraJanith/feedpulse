@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Feedback {
   _id: string;
@@ -24,13 +24,14 @@ export default function DashboardPage() {
   const router = useRouter();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem("adminToken");
     if (!token) {
-      router.push('/admin/login');
+      router.push("/admin/login");
       return;
     }
     fetchFeedbacks(token);
@@ -38,10 +39,10 @@ export default function DashboardPage() {
 
   const fetchFeedbacks = async (token: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
       const params = new URLSearchParams();
-      if (categoryFilter) params.append('category', categoryFilter);
-      if (statusFilter) params.append('status', statusFilter);
+      if (categoryFilter) params.append("category", categoryFilter);
+      if (statusFilter) params.append("status", statusFilter);
 
       const response = await fetch(`${apiUrl}/api/feedback?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -50,22 +51,22 @@ export default function DashboardPage() {
       const data = await response.json();
       if (data.success) setFeedbacks(data.data);
     } catch (error) {
-      console.error('Failed to fetch feedbacks:', error);
+      console.error("Failed to fetch feedbacks:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem("adminToken");
     if (!token) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
       const response = await fetch(`${apiUrl}/api/feedback/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ status }),
@@ -74,30 +75,51 @@ export default function DashboardPage() {
       const data = await response.json();
       if (data.success) {
         setFeedbacks((prev) =>
-          prev.map((f) => (f._id === id ? { ...f, status } : f))
+          prev.map((f) => (f._id === id ? { ...f, status } : f)),
         );
       }
     } catch (error) {
-      console.error('Failed to update status:', error);
+      console.error("Failed to update status:", error);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    router.push('/admin/login');
+    localStorage.removeItem("adminToken");
+    router.push("/admin/login");
   };
 
   const getSentimentColor = (sentiment?: string) => {
-    if (sentiment === 'Positive') return 'bg-green-900/50 text-green-400 border-green-700';
-    if (sentiment === 'Negative') return 'bg-red-900/50 text-red-400 border-red-700';
-    return 'bg-yellow-900/50 text-yellow-400 border-yellow-700';
+    if (sentiment === "Positive")
+      return "bg-green-900/50 text-green-400 border-green-700";
+    if (sentiment === "Negative")
+      return "bg-red-900/50 text-red-400 border-red-700";
+    return "bg-yellow-900/50 text-yellow-400 border-yellow-700";
   };
 
   const getStatusColor = (status: string) => {
-    if (status === 'Resolved') return 'bg-green-900/50 text-green-400';
-    if (status === 'In Review') return 'bg-blue-900/50 text-blue-400';
-    return 'bg-gray-800 text-gray-400';
+    if (status === "Resolved") return "bg-green-900/50 text-green-400";
+    if (status === "In Review") return "bg-blue-900/50 text-blue-400";
+    return "bg-gray-800 text-gray-400";
   };
+
+  const filteredFeedbacks = feedbacks.filter((feedback) => {
+    const matchesSearch =
+      feedback.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      feedback.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      feedback.aiSummary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      feedback.aiTags?.some((tag) =>
+        tag.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
+
+    const matchesCategory = categoryFilter
+      ? feedback.category === categoryFilter
+      : true;
+    const matchesStatus = statusFilter
+      ? feedback.status === statusFilter
+      : true;
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
 
   if (isLoading) {
     return (
@@ -125,6 +147,15 @@ export default function DashboardPage() {
 
         {/* Filters */}
         <div className="flex gap-4 mb-6">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search feedback..."
+            className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 w-64"
+            aria-label="Search feedback"
+          />
+
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
@@ -152,13 +183,13 @@ export default function DashboardPage() {
         </div>
 
         {/* Feedback Table */}
-        {feedbacks.length === 0 ? (
+        {filteredFeedbacks.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             No feedback found.
           </div>
         ) : (
           <div className="space-y-4">
-            {feedbacks.map((feedback) => (
+            {filteredFeedbacks.map((feedback) => (
               <div
                 key={feedback._id}
                 className="bg-gray-900 border border-gray-800 rounded-xl p-6"
@@ -166,12 +197,16 @@ export default function DashboardPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{feedback.title}</h3>
-                    <p className="text-gray-400 text-sm mt-1">{feedback.description}</p>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {feedback.description}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {/* Sentiment Badge */}
                     {feedback.aiSentiment && (
-                      <span className={`text-xs px-2 py-1 rounded-full border ${getSentimentColor(feedback.aiSentiment)}`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full border ${getSentimentColor(feedback.aiSentiment)}`}
+                      >
                         {feedback.aiSentiment}
                       </span>
                     )}
@@ -195,7 +230,10 @@ export default function DashboardPage() {
                 {feedback.aiTags && feedback.aiTags.length > 0 && (
                   <div className="flex gap-2 flex-wrap mb-3">
                     {feedback.aiTags.map((tag) => (
-                      <span key={tag} className="text-xs px-2 py-1 bg-gray-800 text-gray-300 rounded-full">
+                      <span
+                        key={tag}
+                        className="text-xs px-2 py-1 bg-gray-800 text-gray-300 rounded-full"
+                      >
                         #{tag}
                       </span>
                     ))}
@@ -206,7 +244,9 @@ export default function DashboardPage() {
                   <div className="flex gap-3 text-xs text-gray-500">
                     <span>{feedback.category}</span>
                     <span>•</span>
-                    <span>{new Date(feedback.createdAt).toLocaleDateString()}</span>
+                    <span>
+                      {new Date(feedback.createdAt).toLocaleDateString()}
+                    </span>
                     {feedback.submitterName && (
                       <>
                         <span>•</span>
@@ -217,12 +257,16 @@ export default function DashboardPage() {
 
                   {/* Status Selector */}
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(feedback.status)}`}>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${getStatusColor(feedback.status)}`}
+                    >
                       {feedback.status}
                     </span>
                     <select
                       value={feedback.status}
-                      onChange={(e) => updateStatus(feedback._id, e.target.value)}
+                      onChange={(e) =>
+                        updateStatus(feedback._id, e.target.value)
+                      }
                       className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
                       aria-label="Update feedback status"
                     >

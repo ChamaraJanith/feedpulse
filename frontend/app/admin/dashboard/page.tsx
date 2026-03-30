@@ -27,6 +27,12 @@ export default function DashboardPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const totalFeedbacks = feedbacks.length;
+  const newCount = feedbacks.filter((f) => f.status === "New").length;
+  const inReviewCount = feedbacks.filter(
+    (f) => f.status === "In Review",
+  ).length;
+  const resolvedCount = feedbacks.filter((f) => f.status === "Resolved").length;
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
@@ -144,6 +150,32 @@ export default function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold mb-6">Feedback Dashboard</h1>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">Total Feedback</p>
+            <h2 className="text-2xl font-bold text-white">{totalFeedbacks}</h2>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">New</p>
+            <h2 className="text-2xl font-bold text-yellow-400">{newCount}</h2>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">In Review</p>
+            <h2 className="text-2xl font-bold text-blue-400">
+              {inReviewCount}
+            </h2>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">Resolved</p>
+            <h2 className="text-2xl font-bold text-green-400">
+              {resolvedCount}
+            </h2>
+          </div>
+        </div>
 
         {/* Filters */}
         <div className="flex gap-4 mb-6">

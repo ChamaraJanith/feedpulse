@@ -27,6 +27,8 @@ export default function DashboardPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showReport, setShowReport] = useState(false);
+
   const totalFeedbacks = feedbacks.length;
   const newCount = feedbacks.filter((f) => f.status === "New").length;
   const inReviewCount = feedbacks.filter(
@@ -135,6 +137,19 @@ export default function DashboardPage() {
     );
   }
 
+  const categoryCounts = {
+    Bug: feedbacks.filter((f) => f.category === 'Bug').length,
+    'Feature Request': feedbacks.filter((f) => f.category === 'Feature Request').length,
+    Improvement: feedbacks.filter((f) => f.category === 'Improvement').length,
+    Other: feedbacks.filter((f) => f.category === 'Other').length,
+  };
+
+const sentimentCounts = {
+  Positive: feedbacks.filter((f) => f.aiSentiment === 'Positive').length,
+  Neutral: feedbacks.filter((f) => f.aiSentiment === 'Neutral').length,
+  Negative: feedbacks.filter((f) => f.aiSentiment === 'Negative').length,
+};
+
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       {/* Nav */}
@@ -151,34 +166,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold mb-6">Feedback Dashboard</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-2">Total Feedback</p>
-            <h2 className="text-2xl font-bold text-white">{totalFeedbacks}</h2>
-          </div>
-
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-2">New</p>
-            <h2 className="text-2xl font-bold text-yellow-400">{newCount}</h2>
-          </div>
-
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-2">In Review</p>
-            <h2 className="text-2xl font-bold text-blue-400">
-              {inReviewCount}
-            </h2>
-          </div>
-
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-2">Resolved</p>
-            <h2 className="text-2xl font-bold text-green-400">
-              {resolvedCount}
-            </h2>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-4 mb-6">
           <input
             type="text"
             value={searchTerm}
@@ -212,7 +200,81 @@ export default function DashboardPage() {
             <option>In Review</option>
             <option>Resolved</option>
           </select>
+
+          <div className="ml-auto">
+            <button
+              onClick={() => setShowReport((prev) => !prev)}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
+              aria-label={showReport ? "Hide Feedback Report" : "Generate Feedback Report"}
+            >
+              {showReport ? "Hide Report" : "Generate Summary"}
+            </button>
+          </div>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">Total Feedback</p>
+            <h2 className="text-2xl font-bold text-white">{totalFeedbacks}</h2>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">New</p>
+            <h2 className="text-2xl font-bold text-yellow-400">{newCount}</h2>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">In Review</p>
+            <h2 className="text-2xl font-bold text-blue-400">
+              {inReviewCount}
+            </h2>
+          </div>
+
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-2">Resolved</p>
+            <h2 className="text-2xl font-bold text-green-400">
+              {resolvedCount}
+            </h2>
+          </div>
+        </div>
+
+        {showReport && (
+  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+    <h2 className="text-xl font-bold mb-4 text-white">Feedback Report</h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-2 text-blue-400">Category Breakdown</h3>
+        <ul className="space-y-1 text-gray-300">
+          <li>Bug: {categoryCounts.Bug}</li>
+          <li>Feature Request: {categoryCounts['Feature Request']}</li>
+          <li>Improvement: {categoryCounts.Improvement}</li>
+          <li>Other: {categoryCounts.Other}</li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-semibold mb-2 text-green-400">Sentiment Breakdown</h3>
+        <ul className="space-y-1 text-gray-300">
+          <li>Positive: {sentimentCounts.Positive}</li>
+          <li>Neutral: {sentimentCounts.Neutral}</li>
+          <li>Negative: {sentimentCounts.Negative}</li>
+        </ul>
+      </div>
+    </div>
+
+    <div className="mt-6">
+      <h3 className="text-lg font-semibold mb-2 text-purple-400">Summary</h3>
+      <p className="text-gray-300 leading-7">
+        A total of {feedbacks.length} feedback item(s) have been submitted. Most feedback is currently in the
+        "{feedbacks.filter((f) => f.status === 'New').length > 0 ? 'New' : 'tracked'}" stage, and the dominant category appears to be
+        {" "}
+        {Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0][0]}.
+        Overall sentiment is mostly {Object.entries(sentimentCounts).sort((a, b) => b[1] - a[1])[0][0].toLowerCase()}.
+      </p>
+    </div>
+  </div>
+)}
 
         {/* Feedback Table */}
         {filteredFeedbacks.length === 0 ? (

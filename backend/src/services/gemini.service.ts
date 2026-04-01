@@ -14,6 +14,8 @@ const MODELS = [
   'gemini-3-flash-preview',
 ];
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 export const analyzeFeedback = async (
   title: string,
   description: string
@@ -33,17 +35,21 @@ Return this exact JSON structure:
 }`;
 
   for (const modelName of MODELS) {
-    try {
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
-      const geminiModel = genAI.getGenerativeModel({ model: modelName });
-      const result = await geminiModel.generateContent(prompt);
-      const response = result.response.text().trim();
-      const parsed: GeminiAnalysis = JSON.parse(response);
-      console.log(`Gemini success with model: ${modelName}`);
-      return parsed;
-    } catch (error: any) {
-      console.error(`Gemini failed with model ${modelName}:`, error.message);
-      continue;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+        const geminiModel = genAI.getGenerativeModel({ model: modelName });
+        const result = await geminiModel.generateContent(prompt);
+        const response = result.response.text().trim();
+        const parsed: GeminiAnalysis = JSON.parse(response);
+        console.log(`Gemini success with model: ${modelName} (attempt ${attempt})`);
+        return parsed;
+      } catch (error: any) {
+        console.error(`Gemini failed with model ${modelName} attempt ${attempt}:`, error.message);
+        if (attempt === 1) {
+          await delay(2000);
+        }
+      }
     }
   }
 

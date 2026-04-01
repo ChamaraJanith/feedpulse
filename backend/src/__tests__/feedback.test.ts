@@ -1,0 +1,45 @@
+import request from 'supertest';
+import app from '../index';
+
+jest.mock('../services/gemini.service', () => ({
+  analyzeFeedback: jest.fn().mockResolvedValue({
+    aiCategory: 'Bug',
+    aiSentiment: 'Negative',
+    aiPriority: 8,
+    aiSummary: 'Test summary',
+    aiTags: ['test', 'bug'],
+    originalLanguage: 'en',
+    translatedTitle: null,
+    translatedDescription: null,
+  }),
+}));
+
+describe('Feedback API', () => {
+  it('POST /api/feedback - should fail without required fields', async () => {
+    const res = await request(app)
+      .post('/api/feedback')
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /api/feedback - should succeed with valid data', async () => {
+    const res = await request(app)
+      .post('/api/feedback')
+      .send({
+        title: 'Test Feedback',
+        description: 'This is a test feedback description minimum length',
+        category: 'Bug',
+        submitterName: 'Test User',
+        submitterEmail: 'test@test.com',
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+  }, 15000);
+
+  it('GET /api/feedback - should return feedback list', async () => {
+    const res = await request(app).get('/api/feedback');
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.data)).toBe(true);
+  });
+});

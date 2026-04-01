@@ -1,14 +1,21 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IFeedback extends Document {
   title: string;
   description: string;
-  category: 'Bug' | 'Feature Request' | 'Improvement' | 'Other';
-  status: 'New' | 'In Review' | 'Resolved';
+  category: "Bug" | "Feature Request" | "Improvement" | "Other";
+  status: "New" | "In Review" | "Resolved";
   submitterName?: string;
   submitterEmail?: string;
+
+  originalLanguage?: string;
+  originalTitle?: string;
+  originalDescription?: string;
+  translatedTitle?: string;
+  translatedDescription?: string;
+
   aiCategory?: string;
-  aiSentiment?: 'Positive' | 'Neutral' | 'Negative';
+  aiSentiment?: "Positive" | "Neutral" | "Negative";
   aiPriority?: number;
   aiSummary?: string;
   aiTags?: string[];
@@ -21,25 +28,25 @@ const FeedbackSchema = new Schema<IFeedback>(
   {
     title: {
       type: String,
-      required: [true, 'Title is required'],
-      maxlength: [120, 'Title cannot exceed 120 characters'],
+      required: [true, "Title is required"],
+      maxlength: [120, "Title cannot exceed 120 characters"],
       trim: true,
     },
     description: {
       type: String,
-      required: [true, 'Description is required'],
-      minlength: [20, 'Description must be at least 20 characters'],
+      required: [true, "Description is required"],
+      minlength: [20, "Description must be at least 20 characters"],
       trim: true,
     },
     category: {
       type: String,
-      enum: ['Bug', 'Feature Request', 'Improvement', 'Other'],
-      required: [true, 'Category is required'],
+      enum: ["Bug", "Feature Request", "Improvement", "Other"],
+      required: [true, "Category is required"],
     },
     status: {
       type: String,
-      enum: ['New', 'In Review', 'Resolved'],
-      default: 'New',
+      enum: ["New", "In Review", "Resolved"],
+      default: "New",
     },
     submitterName: {
       type: String,
@@ -48,12 +55,34 @@ const FeedbackSchema = new Schema<IFeedback>(
     submitterEmail: {
       type: String,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+      match: [/^\S+@\S+\.\S+$/, "Please provide a valid email"],
     },
+
+    originalLanguage: {
+      type: String,
+      default: "en",
+    },
+    originalTitle: {
+      type: String,
+      trim: true,
+    },
+    originalDescription: {
+      type: String,
+      trim: true,
+    },
+    translatedTitle: {
+      type: String,
+      trim: true,
+    },
+    translatedDescription: {
+      type: String,
+      trim: true,
+    },
+
     aiCategory: { type: String },
     aiSentiment: {
       type: String,
-      enum: ['Positive', 'Neutral', 'Negative'],
+      enum: ["Positive", "Neutral", "Negative"],
     },
     aiPriority: {
       type: Number,
@@ -72,10 +101,10 @@ const FeedbackSchema = new Schema<IFeedback>(
   }
 );
 
-// MongoDB indexes for query performance
 FeedbackSchema.index({ status: 1 });
 FeedbackSchema.index({ category: 1 });
 FeedbackSchema.index({ aiPriority: -1 });
 FeedbackSchema.index({ createdAt: -1 });
 
-export default mongoose.model<IFeedback>('Feedback', FeedbackSchema);
+export default mongoose.models.Feedback ||
+  mongoose.model<IFeedback>("Feedback", FeedbackSchema);

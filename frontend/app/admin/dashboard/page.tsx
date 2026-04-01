@@ -11,6 +11,9 @@ interface Feedback {
   status: string;
   submitterName?: string;
   submitterEmail?: string;
+  originalLanguage?: string;
+  translatedTitle?: string;
+  translatedDescription?: string;
   aiCategory?: string;
   aiSentiment?: string;
   aiPriority?: number;
@@ -26,6 +29,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [languageFilter, setLanguageFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showReport, setShowReport] = useState(false);
 
@@ -206,6 +210,8 @@ export default function DashboardPage() {
 
       const recordsBody = feedbacks.map((item) => [
         item.title,
+        item.originalLanguage?.toUpperCase() || "N/A",
+        item.translatedTitle || "-",
         item.category,
         item.status,
         item.aiSentiment || "N/A",
@@ -221,7 +227,7 @@ export default function DashboardPage() {
         styles: { fontSize: 8, cellPadding: 4 },
         headStyles: { fillColor: [15, 23, 42], textColor: "#ffffff" },
         theme: "grid",
-        head: [["Title", "Category", "Status", "Sentiment", "Priority", "Submitter", "Email", "Created", "Tags"]],
+        head: [["Title", "Lang", "Translated Title", "Category", "Status", "Sentiment", "Priority", "Submitter", "Email", "Created", "Tags"]],
         body: recordsBody,
         didDrawPage: addHeaderFooter,
         margin: { top: 270, bottom: 40 },
@@ -231,7 +237,11 @@ export default function DashboardPage() {
       if (feedbacks.length > 0) {
         const detailsBody = feedbacks.map((item) => [
           item.title,
+          item.originalLanguage?.toUpperCase() || "N/A",
           item.description.replace(/\n/g, " ").substring(0, 180),
+          item.translatedDescription
+            ? item.translatedDescription.replace(/\n/g, " ").substring(0, 220)
+            : "-",
           item.aiSummary || "-",
           item.aiTags?.join(", ") || "-",
         ]);
@@ -241,14 +251,15 @@ export default function DashboardPage() {
           styles: { fontSize: 8, cellPadding: 4 },
           headStyles: { fillColor: [31, 41, 55], textColor: "#ffffff" },
           theme: "striped",
-          head: [["Title", "Description", "AI Summary", "AI Tags"]],
+          head: [["Title", "Lang", "Original Desc", "Translated Desc", "AI Summary", "AI Tags"]],
           body: detailsBody,
           didDrawPage: addHeaderFooter,
           margin: { bottom: 40 },
           columnStyles: {
-            1: { cellWidth: 150 },
-            2: { cellWidth: 150 },
-            3: { cellWidth: 100 },
+            2: { cellWidth: 120 },
+            3: { cellWidth: 130 },
+            4: { cellWidth: 130 },
+            5: { cellWidth: 100 },
           },
         });
       }
@@ -275,8 +286,11 @@ export default function DashboardPage() {
     const matchesStatus = statusFilter
       ? feedback.status === statusFilter
       : true;
+    const matchesLanguage = languageFilter
+      ? feedback.originalLanguage === languageFilter
+      : true;
 
-    return matchesSearch && matchesCategory && matchesStatus;
+    return matchesSearch && matchesCategory && matchesStatus && matchesLanguage;
   });
 
   if (isLoading) {
@@ -349,6 +363,21 @@ const sentimentCounts = {
             <option>New</option>
             <option>In Review</option>
             <option>Resolved</option>
+          </select>
+
+          <select
+            value={languageFilter}
+            onChange={(e) => setLanguageFilter(e.target.value)}
+            className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
+            aria-label="Filter by language"
+          >
+            <option value="">All Languages</option>
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+            <option value="zh">Chinese</option>
           </select>
 
           <div className="ml-auto flex items-center gap-2">
@@ -448,7 +477,19 @@ const sentimentCounts = {
               >
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{feedback.title}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-lg">{feedback.title}</h3>
+                      {feedback.originalLanguage && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 border border-indigo-700">
+                          {feedback.originalLanguage.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    {feedback.translatedTitle && feedback.translatedTitle !== feedback.title ? (
+                      <p className="text-cyan-300 text-sm italic mb-1">
+                        Translated Title: {feedback.translatedTitle}
+                      </p>
+                    ) : null}
                     <p className="text-gray-400 text-sm mt-1">
                       {feedback.description}
                     </p>
@@ -470,6 +511,13 @@ const sentimentCounts = {
                     )}
                   </div>
                 </div>
+
+                {/* Translated Description */}
+                {feedback.translatedDescription && feedback.translatedDescription !== feedback.description && (
+                  <p className="text-cyan-200 text-sm mb-2 italic">
+                    Translated: {feedback.translatedDescription}
+                  </p>
+                )}
 
                 {/* AI Summary */}
                 {feedback.aiSummary && (

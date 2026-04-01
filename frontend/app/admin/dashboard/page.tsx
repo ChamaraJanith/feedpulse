@@ -32,12 +32,11 @@ export default function DashboardPage() {
   const [languageFilter, setLanguageFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [showReport, setShowReport] = useState(false);
+  const [expandedFeedbackId, setExpandedFeedbackId] = useState<string | null>(null);
 
   const totalFeedbacks = feedbacks.length;
   const newCount = feedbacks.filter((f) => f.status === "New").length;
-  const inReviewCount = feedbacks.filter(
-    (f) => f.status === "In Review",
-  ).length;
+  const inReviewCount = feedbacks.filter((f) => f.status === "In Review").length;
   const resolvedCount = feedbacks.filter((f) => f.status === "Resolved").length;
 
   useEffect(() => {
@@ -208,66 +207,148 @@ export default function DashboardPage() {
         { maxWidth: width - 80 },
       );
 
-      const recordsBody = feedbacks.map((item) => [
+      const overviewBody = feedbacks.map((item) => [
         item.title,
         item.originalLanguage?.toUpperCase() || "N/A",
-        item.translatedTitle || "-",
         item.category,
         item.status,
         item.aiSentiment || "N/A",
         item.aiPriority ? `P${item.aiPriority}` : "N/A",
-        item.submitterName || "Anonymous",
-        item.submitterEmail || "n/a",
         new Date(item.createdAt).toLocaleDateString(),
-        item.aiTags?.join(", ") || "-",
       ]);
 
       autoTable(doc, {
         startY: 280,
-        styles: { fontSize: 8, cellPadding: 4 },
+        tableWidth: "auto",
+        styles: {
+          fontSize: 9,
+          cellPadding: 4,
+          overflow: "linebreak",
+          cellWidth: "auto",
+          halign: "left",
+          valign: "middle",
+        },
+        bodyStyles: {
+          valign: "top",
+        },
         headStyles: { fillColor: [15, 23, 42], textColor: "#ffffff" },
         theme: "grid",
-        head: [["Title", "Lang", "Translated Title", "Category", "Status", "Sentiment", "Priority", "Submitter", "Email", "Created", "Tags"]],
-        body: recordsBody,
+        head: [["Title", "Lang", "Category", "Status", "Sentiment", "Priority", "Created"]],
+        body: overviewBody,
         didDrawPage: addHeaderFooter,
-        margin: { top: 270, bottom: 40 },
+        margin: { top: 270, bottom: 40, left: 40, right: 40 },
+        columnStyles: {
+          0: { cellWidth: 150 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 80 },
+          3: { cellWidth: 70 },
+          4: { cellWidth: 70 },
+          5: { cellWidth: 55 },
+          6: { cellWidth: 85 },
+        },
+        pageBreak: "auto",
       });
 
-      const detailsStartY = doc.previousAutoTable?.finalY ? doc.previousAutoTable.finalY + 20 : 280;
       if (feedbacks.length > 0) {
-        const detailsBody = feedbacks.map((item) => [
+        doc.addPage();
+        addHeaderFooter({ pageNumber: doc.internal.getNumberOfPages() });
+
+        doc.setFontSize(14);
+        doc.setTextColor("#1F2937");
+        doc.text("Feedback Detailed Entries", width / 2, 80, { align: "center" });
+
+        const detailsDescriptionBody = feedbacks.map((item) => [
           item.title,
           item.originalLanguage?.toUpperCase() || "N/A",
-          item.description.replace(/\n/g, " ").substring(0, 180),
-          item.translatedDescription
-            ? item.translatedDescription.replace(/\n/g, " ").substring(0, 220)
-            : "-",
-          item.aiSummary || "-",
-          item.aiTags?.join(", ") || "-",
+          item.description.replace(/\n/g, " "),
+          item.translatedDescription ? item.translatedDescription.replace(/\n/g, " ") : "-",
         ]);
 
         autoTable(doc, {
-          startY: detailsStartY,
-          styles: { fontSize: 8, cellPadding: 4 },
+          startY: 110,
+          tableWidth: "auto",
+          styles: {
+            fontSize: 9,
+            cellPadding: 4,
+            overflow: "linebreak",
+            cellWidth: "auto",
+            halign: "left",
+            valign: "middle",
+          },
+          bodyStyles: {
+            valign: "top",
+          },
           headStyles: { fillColor: [31, 41, 55], textColor: "#ffffff" },
           theme: "striped",
-          head: [["Title", "Lang", "Original Desc", "Translated Desc", "AI Summary", "AI Tags"]],
-          body: detailsBody,
+          head: [["Title", "Lang", "Original Description", "Translated Description"]],
+          body: detailsDescriptionBody,
           didDrawPage: addHeaderFooter,
-          margin: { bottom: 40 },
+          margin: { left: 40, right: 40, bottom: 40 },
           columnStyles: {
-            2: { cellWidth: 120 },
-            3: { cellWidth: 130 },
-            4: { cellWidth: 130 },
-            5: { cellWidth: 100 },
+            0: { cellWidth: 130 },
+            1: { cellWidth: 40 },
+            2: { cellWidth: 205 },
+            3: { cellWidth: 205 },
           },
+          pageBreak: "auto",
+        });
+
+        doc.addPage();
+        addHeaderFooter({ pageNumber: doc.internal.getNumberOfPages() });
+
+        doc.setFontSize(14);
+        doc.setTextColor("#1F2937");
+        doc.text("Feedback AI Insights", width / 2, 80, { align: "center" });
+
+        const detailsAiBody = feedbacks.map((item) => [
+          item.title,
+          item.originalLanguage?.toUpperCase() || "N/A",
+          item.aiSummary || "-",
+          item.aiTags?.join(", ") || "-",
+          item.aiPriority ? `P${item.aiPriority}` : "N/A",
+          item.submitterName || "N/A",
+          item.submitterEmail || "N/A",
+          new Date(item.createdAt).toLocaleDateString(),
+        ]);
+
+        autoTable(doc, {
+          startY: 110,
+          tableWidth: "auto",
+          styles: {
+            fontSize: 9,
+            cellPadding: 4,
+            overflow: "linebreak",
+            cellWidth: "auto",
+            halign: "left",
+            valign: "middle",
+          },
+          bodyStyles: {
+            valign: "top",
+          },
+          headStyles: { fillColor: [31, 41, 55], textColor: "#ffffff" },
+          theme: "striped",
+          head: [["Title", "Lang", "AI Summary", "AI Tags", "Priority", "Submitter", "Email", "Created"]],
+          body: detailsAiBody,
+          didDrawPage: addHeaderFooter,
+          margin: { left: 40, right: 40, bottom: 40 },
+          columnStyles: {
+            0: { cellWidth: 110 },
+            1: { cellWidth: 35 },
+            2: { cellWidth: 180 },
+            3: { cellWidth: 130 },
+            4: { cellWidth: 60 },
+            5: { cellWidth: 100 },
+            6: { cellWidth: 120 },
+            7: { cellWidth: 70 },
+          },
+          pageBreak: "auto",
         });
       }
 
       doc.save(`FeedPulse_Professional_Report_${now.toISOString().split("T")[0]}.pdf`);
     } catch (error) {
       console.error("Failed to generate PDF:", error);
-      alert("Unable to generate PDF. Please install jsPDF and jspdf-autotable dependencies or check console for detail.");
+      alert("Unable to generate PDF.");
     }
   };
 
@@ -280,15 +361,9 @@ export default function DashboardPage() {
         tag.toLowerCase().includes(searchTerm.toLowerCase()),
       );
 
-    const matchesCategory = categoryFilter
-      ? feedback.category === categoryFilter
-      : true;
-    const matchesStatus = statusFilter
-      ? feedback.status === statusFilter
-      : true;
-    const matchesLanguage = languageFilter
-      ? feedback.originalLanguage === languageFilter
-      : true;
+    const matchesCategory = categoryFilter ? feedback.category === categoryFilter : true;
+    const matchesStatus = statusFilter ? feedback.status === statusFilter : true;
+    const matchesLanguage = languageFilter ? feedback.originalLanguage === languageFilter : true;
 
     return matchesSearch && matchesCategory && matchesStatus && matchesLanguage;
   });
@@ -301,22 +376,21 @@ export default function DashboardPage() {
     );
   }
 
-  const categoryCounts = {
-    Bug: feedbacks.filter((f) => f.category === 'Bug').length,
-    'Feature Request': feedbacks.filter((f) => f.category === 'Feature Request').length,
-    Improvement: feedbacks.filter((f) => f.category === 'Improvement').length,
-    Other: feedbacks.filter((f) => f.category === 'Other').length,
+  const currentCategoryCounts = {
+    Bug: feedbacks.filter((f) => f.category === "Bug").length,
+    "Feature Request": feedbacks.filter((f) => f.category === "Feature Request").length,
+    Improvement: feedbacks.filter((f) => f.category === "Improvement").length,
+    Other: feedbacks.filter((f) => f.category === "Other").length,
   };
 
-const sentimentCounts = {
-  Positive: feedbacks.filter((f) => f.aiSentiment === 'Positive').length,
-  Neutral: feedbacks.filter((f) => f.aiSentiment === 'Neutral').length,
-  Negative: feedbacks.filter((f) => f.aiSentiment === 'Negative').length,
-};
+  const currentSentimentCounts = {
+    Positive: feedbacks.filter((f) => f.aiSentiment === "Positive").length,
+    Neutral: feedbacks.filter((f) => f.aiSentiment === "Neutral").length,
+    Negative: feedbacks.filter((f) => f.aiSentiment === "Negative").length,
+  };
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
-      {/* Nav */}
       <nav className="border-b border-gray-800 px-6 py-4 flex justify-between items-center">
         <span className="text-xl font-bold text-blue-400">FeedPulse Admin</span>
         <button
@@ -337,14 +411,12 @@ const sentimentCounts = {
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search feedback..."
             className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 w-64"
-            aria-label="Search feedback"
           />
 
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-            aria-label="Filter by category"
           >
             <option value="">All Categories</option>
             <option>Bug</option>
@@ -357,7 +429,6 @@ const sentimentCounts = {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-            aria-label="Filter by status"
           >
             <option value="">All Statuses</option>
             <option>New</option>
@@ -369,7 +440,6 @@ const sentimentCounts = {
             value={languageFilter}
             onChange={(e) => setLanguageFilter(e.target.value)}
             className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-            aria-label="Filter by language"
           >
             <option value="">All Languages</option>
             <option value="en">English</option>
@@ -383,16 +453,14 @@ const sentimentCounts = {
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={generateProfessionalPdf}
-              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-300 transition"
-              aria-label="Export  PDF"
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-500 transition"
             >
               Export Professional PDF
             </button>
 
             <button
               onClick={() => setShowReport((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"
-              aria-label={showReport ? "Hide Feedback Report" : "Generate Feedback Report"}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 transition"
             >
               {showReport ? "Hide Report" : "Generate Summary"}
             </button>
@@ -404,180 +472,148 @@ const sentimentCounts = {
             <p className="text-sm text-gray-400 mb-2">Total Feedback</p>
             <h2 className="text-2xl font-bold text-white">{totalFeedbacks}</h2>
           </div>
-
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-2">New</p>
             <h2 className="text-2xl font-bold text-yellow-400">{newCount}</h2>
           </div>
-
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-2">In Review</p>
-            <h2 className="text-2xl font-bold text-blue-400">
-              {inReviewCount}
-            </h2>
+            <h2 className="text-2xl font-bold text-blue-400">{inReviewCount}</h2>
           </div>
-
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-2">Resolved</p>
-            <h2 className="text-2xl font-bold text-green-400">
-              {resolvedCount}
-            </h2>
+            <h2 className="text-2xl font-bold text-green-400">{resolvedCount}</h2>
           </div>
         </div>
 
         {showReport && (
-  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
-    <h2 className="text-xl font-bold mb-4 text-white">Feedback Report</h2>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-2 text-blue-400">Category Breakdown</h3>
-        <ul className="space-y-1 text-gray-300">
-          <li>Bug: {categoryCounts.Bug}</li>
-          <li>Feature Request: {categoryCounts['Feature Request']}</li>
-          <li>Improvement: {categoryCounts.Improvement}</li>
-          <li>Other: {categoryCounts.Other}</li>
-        </ul>
-      </div>
-
-      <div>
-        <h3 className="text-lg font-semibold mb-2 text-green-400">Sentiment Breakdown</h3>
-        <ul className="space-y-1 text-gray-300">
-          <li>Positive: {sentimentCounts.Positive}</li>
-          <li>Neutral: {sentimentCounts.Neutral}</li>
-          <li>Negative: {sentimentCounts.Negative}</li>
-        </ul>
-      </div>
-    </div>
-
-    <div className="mt-6">
-      <h3 className="text-lg font-semibold mb-2 text-purple-400">Summary</h3>
-      <p className="text-gray-300 leading-7">
-        A total of {feedbacks.length} feedback item(s) have been submitted. Most feedback is currently in the
-        "{feedbacks.filter((f) => f.status === 'New').length > 0 ? 'New' : 'tracked'}" stage, and the dominant category appears to be
-        {" "}
-        {Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0][0]}.
-        Overall sentiment is mostly {Object.entries(sentimentCounts).sort((a, b) => b[1] - a[1])[0][0].toLowerCase()}.
-      </p>
-    </div>
-  </div>
-)}
-
-        {/* Feedback Table */}
-        {filteredFeedbacks.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            No feedback found.
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4 text-white">Feedback Report Summary</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-blue-400">Category Breakdown</h3>
+                <ul className="space-y-1 text-gray-300">
+                  <li>Bug: {currentCategoryCounts.Bug}</li>
+                  <li>Feature Request: {currentCategoryCounts["Feature Request"]}</li>
+                  <li>Improvement: {currentCategoryCounts.Improvement}</li>
+                  <li>Other: {currentCategoryCounts.Other}</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-green-400">Sentiment Breakdown</h3>
+                <ul className="space-y-1 text-gray-300">
+                  <li>Positive: {currentSentimentCounts.Positive}</li>
+                  <li>Neutral: {currentSentimentCounts.Neutral}</li>
+                  <li>Negative: {currentSentimentCounts.Negative}</li>
+                </ul>
+              </div>
+            </div>
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-2 text-purple-400">Contextual Summary</h3>
+              <p className="text-gray-300 leading-7">
+                A total of {feedbacks.length} feedback items analyzed. Dominant category:{" "}
+                {Object.entries(currentCategoryCounts).sort((a, b) => b[1] - a[1])[0][0]}. 
+                Overall sentiment trends towards {Object.entries(currentSentimentCounts).sort((a, b) => b[1] - a[1])[0][0].toLowerCase()}.
+              </p>
+            </div>
           </div>
+        )}
+
+        {filteredFeedbacks.length === 0 ? (
+          <div className="text-center py-16 text-gray-500">No feedback found.</div>
         ) : (
           <div className="space-y-4">
-            {filteredFeedbacks.map((feedback) => (
-              <div
-                key={feedback._id}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-6"
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg">{feedback.title}</h3>
-                      {feedback.originalLanguage && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 border border-indigo-700">
-                          {feedback.originalLanguage.toUpperCase()}
+            {filteredFeedbacks.map((feedback) => {
+              const isExpanded = expandedFeedbackId === feedback._id;
+              return (
+                <div key={feedback._id} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg">{feedback.title}</h3>
+                        {feedback.originalLanguage && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-900 text-indigo-300 border border-indigo-700">
+                            {feedback.originalLanguage.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      {feedback.translatedTitle && feedback.translatedTitle !== feedback.title && (
+                        <p className="text-cyan-300 text-sm italic mb-1">Translated Title: {feedback.translatedTitle}</p>
+                      )}
+                      <p className={`text-gray-400 text-sm mt-1 ${!isExpanded && "max-h-12 overflow-hidden"}`}>
+                        {feedback.description}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button
+                        onClick={() => setExpandedFeedbackId(isExpanded ? null : feedback._id)}
+                        className="text-xs px-2 py-1 rounded-md border border-gray-700 bg-gray-800 text-gray-200 hover:bg-gray-700 transition"
+                      >
+                        {isExpanded ? "Hide Details" : "View Details"}
+                      </button>
+                      {feedback.aiSentiment && (
+                        <span className={`text-xs px-2 py-1 rounded-full border ${getSentimentColor(feedback.aiSentiment)}`}>
+                          {feedback.aiSentiment}
+                        </span>
+                      )}
+                      {feedback.aiPriority && (
+                        <span className="text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-400 border border-purple-700">
+                          P{feedback.aiPriority}
                         </span>
                       )}
                     </div>
-                    {feedback.translatedTitle && feedback.translatedTitle !== feedback.title ? (
-                      <p className="text-cyan-300 text-sm italic mb-1">
-                        Translated Title: {feedback.translatedTitle}
-                      </p>
-                    ) : null}
-                    <p className="text-gray-400 text-sm mt-1">
-                      {feedback.description}
-                    </p>
                   </div>
-                  <div className="flex items-center gap-2 ml-4">
-                    {/* Sentiment Badge */}
-                    {feedback.aiSentiment && (
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full border ${getSentimentColor(feedback.aiSentiment)}`}
+
+                  {isExpanded && (
+                    <div className="mt-4 border-t border-gray-800 pt-4 animate-in fade-in duration-300">
+                      {feedback.translatedDescription && feedback.translatedDescription !== feedback.description && (
+                        <p className="text-cyan-200 text-sm mb-2 italic">Translated: {feedback.translatedDescription}</p>
+                      )}
+                      {feedback.aiSummary && (
+                        <p className="text-blue-300 text-sm mb-3 italic">AI Summary: {feedback.aiSummary}</p>
+                      )}
+                      {feedback.aiTags && feedback.aiTags.length > 0 && (
+                        <div className="flex gap-2 flex-wrap mb-3">
+                          {feedback.aiTags.map((tag) => (
+                            <span key={tag} className="text-xs px-2 py-1 bg-gray-800 text-gray-300 rounded-full">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="flex gap-3 text-xs text-gray-500">
+                      <span>{feedback.category}</span>
+                      <span>•</span>
+                      <span>{new Date(feedback.createdAt).toLocaleDateString()}</span>
+                      {feedback.submitterName && (
+                        <>
+                          <span>•</span>
+                          <span>{feedback.submitterName}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(feedback.status)}`}>
+                        {feedback.status}
+                      </span>
+                      <select
+                        value={feedback.status}
+                        onChange={(e) => updateStatus(feedback._id, e.target.value)}
+                        className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
                       >
-                        {feedback.aiSentiment}
-                      </span>
-                    )}
-                    {/* Priority Badge */}
-                    {feedback.aiPriority && (
-                      <span className="text-xs px-2 py-1 rounded-full bg-purple-900/50 text-purple-400 border border-purple-700">
-                        P{feedback.aiPriority}
-                      </span>
-                    )}
+                        <option>New</option>
+                        <option>In Review</option>
+                        <option>Resolved</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
-
-                {/* Translated Description */}
-                {feedback.translatedDescription && feedback.translatedDescription !== feedback.description && (
-                  <p className="text-cyan-200 text-sm mb-2 italic">
-                    Translated: {feedback.translatedDescription}
-                  </p>
-                )}
-
-                {/* AI Summary */}
-                {feedback.aiSummary && (
-                  <p className="text-blue-300 text-sm mb-3 italic">
-                    AI: {feedback.aiSummary}
-                  </p>
-                )}
-
-                {/* Tags */}
-                {feedback.aiTags && feedback.aiTags.length > 0 && (
-                  <div className="flex gap-2 flex-wrap mb-3">
-                    {feedback.aiTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="text-xs px-2 py-1 bg-gray-800 text-gray-300 rounded-full"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center mt-4">
-                  <div className="flex gap-3 text-xs text-gray-500">
-                    <span>{feedback.category}</span>
-                    <span>•</span>
-                    <span>
-                      {new Date(feedback.createdAt).toLocaleDateString()}
-                    </span>
-                    {feedback.submitterName && (
-                      <>
-                        <span>•</span>
-                        <span>{feedback.submitterName}</span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Status Selector */}
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${getStatusColor(feedback.status)}`}
-                    >
-                      {feedback.status}
-                    </span>
-                    <select
-                      value={feedback.status}
-                      onChange={(e) =>
-                        updateStatus(feedback._id, e.target.value)
-                      }
-                      className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-blue-500"
-                      aria-label="Update feedback status"
-                    >
-                      <option>New</option>
-                      <option>In Review</option>
-                      <option>Resolved</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -27,7 +27,7 @@ jobs:
         working-directory: ./backend
         run: npm test
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_URI: ${{ secrets.MONGODB_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}

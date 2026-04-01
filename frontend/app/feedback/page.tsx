@@ -23,6 +23,7 @@ export default function FeedbackPage() {
   const [errors, setErrors] = useState<Partial<FeedbackForm>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es' | 'fr' | 'de' | 'hi' | 'zh'>('en');
 
   const validate = (): boolean => {
     const newErrors: Partial<FeedbackForm> = {};
@@ -59,7 +60,10 @@ export default function FeedbackPage() {
       const response = await fetch(`${apiUrl}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          originalLanguage: selectedLanguage,
+        }),
       });
 
       const data = await response.json();
@@ -153,6 +157,29 @@ export default function FeedbackPage() {
               <option>Improvement</option>
               <option>Other</option>
             </select>
+          </div>
+
+          {/* Language */}
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium text-gray-300 mb-2">
+              Feedback Language <span className="text-red-400">*</span>
+            </label>
+            <select
+              id="language"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value as 'en' | 'es' | 'fr' | 'de' | 'hi' | 'zh')}
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition"
+            >
+              <option value="en">English</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+              <option value="de">German</option>
+              <option value="hi">Hindi</option>
+              <option value="zh">Chinese</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              This helps AI find the correct original language and translate automatically.
+            </p>
           </div>
 
           {/* Description */}

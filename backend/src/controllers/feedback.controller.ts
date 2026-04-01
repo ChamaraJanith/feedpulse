@@ -163,3 +163,94 @@ export const deleteFeedback = async (req: Request, res: Response): Promise<void>
     });
   }
 };
+
+// GET /api/feedback/summary
+export const getFeedbackSummary = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Last 7 days feedback get කරනවා
+    const recentFeedback = await Feedback.find({
+      createdAt: { $gte: sevenDaysAgo },
+      aiProcessed: true,
+    }).lean();
+
+    if (recentFeedback.length === 0) {
+      res.status(200).json({
+        success: true,
+        message: 'No processed feedback found in the last 7 days',
+        data: { summary: 'No feedback available for analysis.', totalCount: 0 },
+      });
+      return;
+    }
+
+    // Gemini ට send කරන්න feedback data prepare කරනවා
+    const feedbackText = recentFeedback
+      .map((f, i) => `${i + 1}. Title: ${f.title} | Category: ${f.aiCategory || f.category} | Sentiment: ${f.aiSentiment || 'Unknown'} | Tags: ${f.aiTags?.join(', ') || 'None'}`)
+      .join('\n');
+
+    const { analyzeFeedback } = await import('../services/gemini.service');
+
+    // Gemini call for trend summary
+    const MODELS = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-3-flash-preview'];
+    let summaryText = '';
+
+    for (const modelName of MODELS) {
+      try {
+        const { GoogleGenerativeAI } = await import('@google/generative-ai');
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+        const geminiModel = genAI.getGenerativeModel({ model: modelName });
+
+        const prompt = `Analyse these ${recentFeedback.length} product feedback items from the last 7 days and identify the top 3 themes. Return ONLY valid JSON:
+{
+  "themes": [
+    {"theme": "Theme name", "count": number, "description": "brief description"},
+    {"theme": "Theme name", "count": number, "description": "brief description"},
+    {"theme": "Theme name", "count": number, "description": "brief description"}
+  ],
+  "overallSentiment": "Positive" | "Neutral" | "Negative",
+  "recommendation": "One actionable recommendation for the product team"
+}
+
+Feedback data:
+${feedbackText}`;
+
+        const result = await geminiModel.generateContent(prompt);
+        summaryText = result.response.text().trim();
+        console.log(`Summary generated with model: ${modelName}`);
+        break;
+      } catch (error: any) {
+        console.error(`Summary failed with model ${modelName}:`, error.message);
+        continue;
+      }
+    }
+
+    if (!summaryText) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to generate AI summary',
+        error: null,
+      });
+      return;
+    }
+
+    const parsed = JSON.parse(summaryText);
+
+    res.status(200).json({
+      success: true,
+      message: 'AI summary generated successfully',
+      data: {
+        ...parsed,
+        totalCount: recentFeedback.length,
+        period: '7 days',
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate summary',
+      error: error.message,
+    });
+  }
+};

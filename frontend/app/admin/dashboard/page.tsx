@@ -151,7 +151,7 @@ export default function DashboardPage() {
       const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
       const topSentiment = Object.entries(sentimentCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
-      const addHeaderFooter = (data: any) => {
+      const addHeaderFooter = (data: { pageNumber: number }) => {
         doc.setFontSize(10);
         doc.setTextColor("#555555");
         doc.text("FeedPulse Inc.", 40, 40);

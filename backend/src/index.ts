@@ -39,7 +39,7 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Start server
+
 const start = async () => {
   await connectDB();
   app.listen(PORT, () => {

@@ -32,6 +32,12 @@ app.get('/health', (req, res) => {
     message: 'FeedPulse API is running',
   });
 });
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'FeedPulse backend is live',
+  });
+});
 
 // Start server
 const start = async () => {

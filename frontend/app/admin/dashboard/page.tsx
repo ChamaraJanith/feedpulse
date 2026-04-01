@@ -110,6 +110,156 @@ export default function DashboardPage() {
     return "bg-gray-800 text-gray-400";
   };
 
+  const generateProfessionalPdf = async () => {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const autoTableModule = await import("jspdf-autotable");
+      const autoTable = autoTableModule.default;
+
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+      const now = new Date();
+
+      const reportTitle = "FeedPulse Professional Feedback Report";
+      const generatedAt = now.toLocaleString();
+      const total = feedbacks.length;
+      const newCount = feedbacks.filter((f) => f.status === "New").length;
+      const reviewCount = feedbacks.filter((f) => f.status === "In Review").length;
+      const resolvedCount = feedbacks.filter((f) => f.status === "Resolved").length;
+
+      const categoryCounts = {
+        Bug: feedbacks.filter((f) => f.category === "Bug").length,
+        "Feature Request": feedbacks.filter((f) => f.category === "Feature Request").length,
+        Improvement: feedbacks.filter((f) => f.category === "Improvement").length,
+        Other: feedbacks.filter((f) => f.category === "Other").length,
+      };
+
+      const sentimentCounts = {
+        Positive: feedbacks.filter((f) => f.aiSentiment === "Positive").length,
+        Neutral: feedbacks.filter((f) => f.aiSentiment === "Neutral").length,
+        Negative: feedbacks.filter((f) => f.aiSentiment === "Negative").length,
+      };
+
+      const averagePriority =
+        feedbacks.filter((f) => typeof f.aiPriority === "number").reduce((sum, f) => sum + (f.aiPriority || 0), 0) /
+        (feedbacks.filter((f) => typeof f.aiPriority === "number").length || 1);
+
+      const topCategory = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+      const topSentiment = Object.entries(sentimentCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+
+      const addHeaderFooter = (data: any) => {
+        doc.setFontSize(10);
+        doc.setTextColor("#555555");
+        doc.text("FeedPulse Inc.", 40, 40);
+        doc.text(`Generated: ${generatedAt}`, width - 170, 40, { align: "right" });
+
+        doc.setFontSize(8);
+        doc.setTextColor("#888888");
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.text(`Page ${data.pageNumber} of ${pageCount}`, width - 40, height - 30, { align: "right" });
+        doc.text("Confidential - Internal Use Only", 40, height - 30);
+      };
+
+      doc.setFontSize(18);
+      doc.setTextColor("#1F2937");
+      doc.text(reportTitle, width / 2, 80, { align: "center" });
+
+      doc.setFontSize(12);
+      doc.setTextColor("#374151");
+      doc.text(`Report Date: ${generatedAt}`, 40, 110);
+      doc.text(
+        `Total Feedback: ${total}  |  New: ${newCount}  |  In Review: ${reviewCount}  |  Resolved: ${resolvedCount}`,
+        40,
+        130,
+      );
+
+      doc.setFontSize(11);
+      doc.text("Major Insights:", 40, 160);
+      doc.setFontSize(10);
+      doc.text(
+        `Top category: ${topCategory}  |  Top sentiment: ${topSentiment}  |  Average AI priority: ${averagePriority.toFixed(1)}`,
+        40,
+        176,
+        { maxWidth: width - 80 },
+      );
+
+      doc.setFontSize(11);
+      doc.text("Category Breakdown:", 40, 198);
+      doc.setFontSize(10);
+      doc.text(
+        `Bug: ${categoryCounts.Bug}, Feature Request: ${categoryCounts["Feature Request"]}, Improvement: ${categoryCounts.Improvement}, Other: ${categoryCounts.Other}`,
+        40,
+        214,
+        { maxWidth: width - 80 },
+      );
+
+      doc.setFontSize(11);
+      doc.text("Sentiment Breakdown:", 40, 236);
+      doc.setFontSize(10);
+      doc.text(
+        `Positive: ${sentimentCounts.Positive}, Neutral: ${sentimentCounts.Neutral}, Negative: ${sentimentCounts.Negative}`,
+        40,
+        252,
+        { maxWidth: width - 80 },
+      );
+
+      const recordsBody = feedbacks.map((item) => [
+        item.title,
+        item.category,
+        item.status,
+        item.aiSentiment || "N/A",
+        item.aiPriority ? `P${item.aiPriority}` : "N/A",
+        item.submitterName || "Anonymous",
+        item.submitterEmail || "n/a",
+        new Date(item.createdAt).toLocaleDateString(),
+        item.aiTags?.join(", ") || "-",
+      ]);
+
+      autoTable(doc, {
+        startY: 280,
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: [15, 23, 42], textColor: "#ffffff" },
+        theme: "grid",
+        head: [["Title", "Category", "Status", "Sentiment", "Priority", "Submitter", "Email", "Created", "Tags"]],
+        body: recordsBody,
+        didDrawPage: addHeaderFooter,
+        margin: { top: 270, bottom: 40 },
+      });
+
+      const detailsStartY = doc.previousAutoTable?.finalY ? doc.previousAutoTable.finalY + 20 : 280;
+      if (feedbacks.length > 0) {
+        const detailsBody = feedbacks.map((item) => [
+          item.title,
+          item.description.replace(/\n/g, " ").substring(0, 180),
+          item.aiSummary || "-",
+          item.aiTags?.join(", ") || "-",
+        ]);
+
+        autoTable(doc, {
+          startY: detailsStartY,
+          styles: { fontSize: 8, cellPadding: 4 },
+          headStyles: { fillColor: [31, 41, 55], textColor: "#ffffff" },
+          theme: "striped",
+          head: [["Title", "Description", "AI Summary", "AI Tags"]],
+          body: detailsBody,
+          didDrawPage: addHeaderFooter,
+          margin: { bottom: 40 },
+          columnStyles: {
+            1: { cellWidth: 150 },
+            2: { cellWidth: 150 },
+            3: { cellWidth: 100 },
+          },
+        });
+      }
+
+      doc.save(`FeedPulse_Professional_Report_${now.toISOString().split("T")[0]}.pdf`);
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      alert("Unable to generate PDF. Please install jsPDF and jspdf-autotable dependencies or check console for detail.");
+    }
+  };
+
   const filteredFeedbacks = feedbacks.filter((feedback) => {
     const matchesSearch =
       feedback.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -201,7 +351,15 @@ const sentimentCounts = {
             <option>Resolved</option>
           </select>
 
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={generateProfessionalPdf}
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-green-300 transition"
+              aria-label="Export  PDF"
+            >
+              Export Professional PDF
+            </button>
+
             <button
               onClick={() => setShowReport((prev) => !prev)}
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"

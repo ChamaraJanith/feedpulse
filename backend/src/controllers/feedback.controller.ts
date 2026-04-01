@@ -13,6 +13,34 @@ export const createFeedback = async (
     const { title, description, category, submitterName, submitterEmail } =
       req.body;
 
+    if (!title || !description || !category || !submitterName || !submitterEmail) {
+      res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+        error: null,
+      });
+      return;
+    }
+
+    if (description.length < 20) {
+      res.status(400).json({
+        success: false,
+        message: 'Description must be at least 20 characters',
+        error: null,
+      });
+      return;
+    }
+
+    const validCategories = ['Bug', 'Feature Request', 'Improvement', 'Other'];
+    if (!validCategories.includes(category)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid category',
+        error: null,
+      });
+      return;
+    }
+
     const feedback = await Feedback.create({
       title,
       description,

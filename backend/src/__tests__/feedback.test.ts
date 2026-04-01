@@ -1,6 +1,25 @@
 import request from 'supertest';
 import app from '../index';
 
+jest.mock('../models/feedback.model', () => ({
+  __esModule: true,
+  default: {
+    create: jest.fn().mockImplementation(async (data) => ({
+      ...data,
+      _id: 'mock-id',
+      aiProcessed: true,
+      save: jest.fn().mockResolvedValue({
+        ...data,
+        _id: 'mock-id',
+      }),
+    })),
+    find: jest.fn().mockReturnValue({
+      sort: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue([]),
+    }),
+  },
+}));
+
 jest.mock('../services/gemini.service', () => ({
   analyzeFeedback: jest.fn().mockResolvedValue({
     aiCategory: 'Bug',

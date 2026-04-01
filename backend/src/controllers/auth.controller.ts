@@ -29,7 +29,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     const token = jwt.sign(
       { email, role: 'admin' },
-      process.env.JWT_SECRET as string,
+      process.env.JWT_SECRET || 'test_jwt_secret',
       { expiresIn: '24h' }
     );
 

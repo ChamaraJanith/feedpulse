@@ -134,6 +134,63 @@ cd frontend
 npm run dev
 ```
 
+## Screenshots
+
+Add screenshot image files into a `screenshots/` folder at repo root, then update links below or use these defaults:
+
+- Admin login and dashboard with pagination:
+
+![Admin Login](screenshots/admin-login.png)
+
+![Admin Dashboard with Pagination](screenshots/admin-dashboard-pagination.png)
+
+- Public feedback form and submit success:
+
+![Feedback Form](screenshots/feedback-form.png)
+
+![Submit Success](screenshots/feedback-success.png)
+
+> Tip: capture these with your local app running and drop the files in `screenshots/`.
+
+## What’s New
+
+- Added secure admin route protection (`protect` + `authorizeAdmin`) for feedback status updates and deletion.
+- Added feedback pagination on `GET /api/feedback` with query params: `page`, `limit`.
+- Dashboard now fetches and shows 10 results per page with `Previous`/`Next` controls and page indicator.
+- Added extra API pagination metadata in response: `totalCount`, `totalPages`, `currentPage`, `perPage`.
+- Enhanced auth behavior on dashboard: auto-logout on `401/403` and redirect to admin login.
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/ChamaraJanith/feedpulse.git
+cd feedpulse
+```
+
+### 2. Install backend dependencies
+
+```bash
+cd backend
+npm install
+```
+
+### 3. Install frontend dependencies
+
+```bash
+cd ../frontend
+npm install
+```
+```
+
+### Run frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
 ## Production Build
 
 ### Backend

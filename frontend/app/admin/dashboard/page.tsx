@@ -33,8 +33,12 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showReport, setShowReport] = useState(false);
   const [expandedFeedbackId, setExpandedFeedbackId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalFeedbacks, setTotalFeedbacks] = useState(0);
+  const perPage = 10;
 
-  const totalFeedbacks = feedbacks.length;
+  const pageFeedbackCount = feedbacks.length;
   const newCount = feedbacks.filter((f) => f.status === "New").length;
   const inReviewCount = feedbacks.filter((f) => f.status === "In Review").length;
   const resolvedCount = feedbacks.filter((f) => f.status === "Resolved").length;
@@ -46,7 +50,7 @@ export default function DashboardPage() {
       return;
     }
     fetchFeedbacks(token);
-  }, [categoryFilter, statusFilter]);
+  }, [categoryFilter, statusFilter, currentPage]);
 
   const fetchFeedbacks = async (token: string) => {
     try {
@@ -54,6 +58,8 @@ export default function DashboardPage() {
       const params = new URLSearchParams();
       if (categoryFilter) params.append("category", categoryFilter);
       if (statusFilter) params.append("status", statusFilter);
+      params.append("page", currentPage.toString());
+      params.append("limit", perPage.toString());
 
       const response = await fetch(`${apiUrl}/api/feedback?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -69,7 +75,11 @@ export default function DashboardPage() {
         throw new Error(data.message || 'Failed to fetch feedbacks');
       }
 
-      if (data.success) setFeedbacks(data.data);
+      if (data.success) {
+        setFeedbacks(data.data);
+        setTotalFeedbacks(data.pagination?.totalCount || 0);
+        setTotalPages(data.pagination?.totalPages || 1);
+      }
     } catch (error) {
       console.error("Failed to fetch feedbacks:", error);
     } finally {
@@ -424,7 +434,10 @@ export default function DashboardPage() {
 
           <select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
           >
             <option value="">All Categories</option>
@@ -436,7 +449,10 @@ export default function DashboardPage() {
 
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
           >
             <option value="">All Statuses</option>
@@ -495,6 +511,28 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="flex items-center justify-between mb-6 gap-2">
+          <div className="text-gray-300 text-sm">
+            Showing {pageFeedbackCount} feedback on page {currentPage} of {totalPages}
+          </div>
+          <div className="flex gap-2">
+            <button
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              className="py-2 px-3 rounded-lg text-sm font-medium bg-gray-800 border border-gray-700 text-white hover:bg-gray-700 disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <button
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              className="py-2 px-3 rounded-lg text-sm font-medium bg-gray-800 border border-gray-700 text-white hover:bg-gray-700 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
         {showReport && (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
             <h2 className="text-xl font-bold mb-4 text-white">Feedback Report Summary</h2>
@@ -520,7 +558,7 @@ export default function DashboardPage() {
             <div className="mt-6">
               <h3 className="text-lg font-semibold mb-2 text-purple-400">Contextual Summary</h3>
               <p className="text-gray-300 leading-7">
-                A total of {feedbacks.length} feedback items analyzed. Dominant category:{" "}
+                A total of {totalFeedbacks} feedback items analyzed. Dominant category:{" "}
                 {Object.entries(currentCategoryCounts).sort((a, b) => b[1] - a[1])[0][0]}. 
                 Overall sentiment trends towards {Object.entries(currentSentimentCounts).sort((a, b) => b[1] - a[1])[0][0].toLowerCase()}.
               </p>

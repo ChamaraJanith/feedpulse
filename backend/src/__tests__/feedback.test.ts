@@ -15,8 +15,11 @@ jest.mock('../models/feedback.model', () => ({
     })),
     find: jest.fn().mockReturnValue({
       sort: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
       lean: jest.fn().mockResolvedValue([]),
     }),
+    countDocuments: jest.fn().mockResolvedValue(0),
   },
 }));
 

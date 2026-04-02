@@ -61,4 +61,30 @@ describe('Feedback API', () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
   });
+
+  it('POST /api/auth/login - should succeed with correct credentials', async () => {
+    const res = await request(app).post('/api/auth/login').send({
+      email: process.env.ADMIN_EMAIL || 'admin@feedpulse.com',
+      password: process.env.ADMIN_PASSWORD || 'admin123',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.token).toBeTruthy();
+  });
+
+  it('POST /api/auth/login - should fail with invalid credentials', async () => {
+    const res = await request(app).post('/api/auth/login').send({
+      email: 'wrong@feedpulse.com',
+      password: 'badpassword',
+    });
+
+    expect(res.status).toBe(401);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('PATCH /api/feedback/:id - should refuse without token', async () => {
+    const res = await request(app).patch('/api/feedback/mock-id').send({ status: 'Resolved' });
+    expect(res.status).toBe(401);
+  });
 });

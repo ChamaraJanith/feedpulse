@@ -42,3 +42,20 @@ export const protect = (
     });
   }
 };
+
+export const authorizeAdmin = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (!req.admin || req.admin.role !== 'admin') {
+    res.status(403).json({
+      success: false,
+      message: 'Forbidden. Admin role required.',
+      error: null,
+    });
+    return;
+  }
+
+  next();
+};

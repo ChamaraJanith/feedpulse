@@ -13,10 +13,10 @@ export const createFeedback = async (
     const { title, description, category, submitterName, submitterEmail } =
       req.body;
 
-    if (!title || !description || !category || !submitterName || !submitterEmail) {
+    if (!title || !description || !category) {
       res.status(400).json({
         success: false,
-        message: 'Missing required fields',
+        message: 'Missing required fields: title, description, category',
         error: null,
       });
       return;
@@ -26,6 +26,15 @@ export const createFeedback = async (
       res.status(400).json({
         success: false,
         message: 'Description must be at least 20 characters',
+        error: null,
+      });
+      return;
+    }
+
+    if (submitterEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(submitterEmail)) {
+      res.status(400).json({
+        success: false,
+        message: 'Submitter email is not valid',
         error: null,
       });
       return;

@@ -60,6 +60,15 @@ export default function DashboardPage() {
       });
 
       const data = await response.json();
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          handleLogout();
+          return;
+        }
+
+        throw new Error(data.message || 'Failed to fetch feedbacks');
+      }
+
       if (data.success) setFeedbacks(data.data);
     } catch (error) {
       console.error("Failed to fetch feedbacks:", error);

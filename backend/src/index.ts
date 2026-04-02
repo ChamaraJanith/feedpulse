@@ -20,11 +20,6 @@ app.use(express.json());
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/auth', authRoutes);
 
-// Middleware
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
-
 // Health check route
 app.get('/health', (req, res) => {
   res.status(200).json({

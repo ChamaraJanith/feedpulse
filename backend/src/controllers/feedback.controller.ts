@@ -111,6 +111,8 @@ export const getAllFeedback = async (
       status,
       sortBy = "createdAt",
       order = "desc",
+      page = "1",
+      limit = "10",
     } = req.query;
 
     const filter: any = {};
@@ -120,14 +122,28 @@ export const getAllFeedback = async (
     const sortOrder = order === "asc" ? 1 : -1;
     const sortField = sortBy as string;
 
+    const pageNumber = Math.max(Number(page) || 1, 1);
+    const perPage = Math.max(Number(limit) || 10, 1);
+    const skip = (pageNumber - 1) * perPage;
+
+    const totalCount = await Feedback.countDocuments(filter);
+
     const feedback = await Feedback.find(filter)
       .sort({ [sortField]: sortOrder })
+      .skip(skip)
+      .limit(perPage)
       .lean();
 
     res.status(200).json({
       success: true,
       message: "Feedback retrieved successfully",
       data: feedback,
+      pagination: {
+        totalCount,
+        totalPages: Math.ceil(totalCount / perPage) || 1,
+        currentPage: pageNumber,
+        perPage,
+      },
     });
   } catch (error: any) {
     res.status(500).json({

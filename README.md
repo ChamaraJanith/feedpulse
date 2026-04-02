@@ -87,6 +87,14 @@ ADMIN_PASSWORD=your_admin_password
 NEXT_PUBLIC_API_URL=https://feedpulse-backend.onrender.com
 ```
 
+## What’s New
+
+- Added secure admin route protection (`protect` + `authorizeAdmin`) for feedback status updates and deletion.
+- Added feedback pagination on `GET /api/feedback` with query params: `page`, `limit`.
+- Dashboard now fetches and shows 10 results per page with `Previous`/`Next` controls and page indicator.
+- Added extra API pagination metadata in response: `totalCount`, `totalPages`, `currentPage`, `perPage`.
+- Enhanced auth behavior on dashboard: auto-logout on `401/403` and redirect to admin login.
+
 ## Installation
 
 ### 1. Clone the repository

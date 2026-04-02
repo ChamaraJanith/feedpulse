@@ -73,12 +73,13 @@ feedpulse/
 
 ```env
 PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-GEMINI_API_KEY=your_gemini_api_key
+MONGO_URI=mongodb+srv://feedpulseapp_db_user:TdY9C43lIqI98o5s@cluster0.ymdmmmt.mongodb.net/?appName=Cluster0
+JWT_SECRET=abcdef123456
+GEMINI_API_KEY=AIzaSyAJMSF_eq-qdcNsvrzFuxjGUfuc1ybzg_A
 GEMINI_MODEL=gemini-3-flash-preview
 ADMIN_EMAIL=admin@feedpulse.com
-ADMIN_PASSWORD=your_admin_password
+ADMIN_PASSWORD=admin123
+
 ```
 
 ### Frontend `.env.local`

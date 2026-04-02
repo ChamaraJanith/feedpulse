@@ -136,21 +136,25 @@ npm run dev
 
 ## Screenshots
 
-Add screenshot image files into a `screenshots/` folder at repo root, then update links below or use these defaults:
+Your screenshots are stored in `screenshots/`; the README is now linked to existing files:
 
-- Admin login and dashboard with pagination:
+- Admin dashboard views:
 
-![Admin Login](screenshots/admin-login.png)
+![Admin Dashboard 1](screenshots/admin_dashboard_1.png)
 
-![Admin Dashboard with Pagination](screenshots/admin-dashboard-pagination.png)
+![Admin Dashboard 2](screenshots/admin_dashboard_2.png)
 
-- Public feedback form and submit success:
+![Admin Dashboard 3](screenshots/admin_dashboard_3.png)
 
-![Feedback Form](screenshots/feedback-form.png)
+![Admin Dashboard AI Summary](screenshots/admin_dashboard_AI_Summary.png)
 
-![Submit Success](screenshots/feedback-success.png)
+- Public feedback form and landing page:
 
-> Tip: capture these with your local app running and drop the files in `screenshots/`.
+![Feedback Form](screenshots/feedback_form.png)
+
+![Landing Page](screenshots/landing_page.png)
+
+> Tip: if you rename screenshots, match the file names in the markdown links above.
 
 ## What’s New
 
